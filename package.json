@@ -1,0 +1,91 @@
+{
+  "name": "sfdx-deploy-retrieve",
+  "displayName": "SFDX Deploy & Retrieve",
+  "description": "Right-click a file to deploy or retrieve it from your default Salesforce sandbox via the sf/sfdx CLI.",
+  "version": "0.1.0",
+  "publisher": "cloudyjohnny",
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [
+    "workspaceContains:sfdx-project.json"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "sfdxDeployRetrieve.deploy",
+        "title": "SFDX: Deploy This Source to Default Org"
+      },
+      {
+        "command": "sfdxDeployRetrieve.retrieve",
+        "title": "SFDX: Retrieve This Source from Default Org"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "sfdxDeployRetrieve.deploy",
+          "group": "sfdx@1",
+          "when": "resourceScheme == file && sfdxDeployRetrieve.isSfdxProject"
+        },
+        {
+          "command": "sfdxDeployRetrieve.retrieve",
+          "group": "sfdx@2",
+          "when": "resourceScheme == file && sfdxDeployRetrieve.isSfdxProject"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "sfdxDeployRetrieve.deploy",
+          "group": "sfdx@1",
+          "when": "resourceScheme == file && sfdxDeployRetrieve.isSfdxProject"
+        },
+        {
+          "command": "sfdxDeployRetrieve.retrieve",
+          "group": "sfdx@2",
+          "when": "resourceScheme == file && sfdxDeployRetrieve.isSfdxProject"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "sfdxDeployRetrieve.deploy",
+          "group": "sfdx@1",
+          "when": "sfdxDeployRetrieve.isSfdxProject"
+        },
+        {
+          "command": "sfdxDeployRetrieve.retrieve",
+          "group": "sfdx@2",
+          "when": "sfdxDeployRetrieve.isSfdxProject"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "SFDX Deploy & Retrieve",
+      "properties": {
+        "sfdxDeployRetrieve.cli": {
+          "type": "string",
+          "enum": ["sf", "sfdx"],
+          "default": "sf",
+          "description": "Which Salesforce CLI binary to invoke."
+        },
+        "sfdxDeployRetrieve.targetOrg": {
+          "type": "string",
+          "default": "",
+          "description": "Username or alias of the org to deploy to / retrieve from. Leave blank to use the default org configured in the project."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.75.0",
+    "typescript": "^5.4.0"
+  }
+}
