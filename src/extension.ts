@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { spawn } from 'child_process';
 import * as path from 'path';
+import * as os from 'os';
 
 let output: vscode.OutputChannel;
 
@@ -40,6 +41,13 @@ async function updateSfdxContext() {
   );
 }
 
+function expandHome(p: string): string {
+  if (p.startsWith('~')) {
+    return path.join(os.homedir(), p.slice(1));
+  }
+  return p;
+}
+
 export function deactivate() {}
 
 type Action = 'deploy' | 'retrieve' | 'runTests';
@@ -52,7 +60,11 @@ async function run(action: Action, uri?: vscode.Uri) {
   }
 
   const cfg = vscode.workspace.getConfiguration('sfdxDeployRetrieve');
-  const cli = cfg.get<string>('cli', 'sf');
+  const cliSetting = cfg.get<string>('cli', 'sf');
+  const cliPathSetting = cfg.get<string>('cliPath', '').trim();
+  const cliPath = cliPathSetting ? expandHome(cliPathSetting) : cliSetting;
+  // `cli` is still the logical name (sf vs sfdx) used to pick the right flags.
+  const cli = cliPathSetting ? path.basename(cliPathSetting).replace(/\.(exe|cmd)$/i, '') : cliSetting;
   const targetOrg = cfg.get<string>('targetOrg', '').trim();
 
   const workspaceFolder = vscode.workspace.getWorkspaceFolder(target);
@@ -78,6 +90,8 @@ async function run(action: Action, uri?: vscode.Uri) {
             className,
             '--resultformat',
             'human',
+            '--codecoverage',
+            '--detailedcoverage',
             '--wait',
             '10',
             '--synchronous',
@@ -90,6 +104,8 @@ async function run(action: Action, uri?: vscode.Uri) {
             className,
             '--result-format',
             'human',
+            '--code-coverage',
+            '--detailed-coverage',
             '--wait',
             '10',
             '--synchronous',
@@ -120,21 +136,37 @@ async function run(action: Action, uri?: vscode.Uri) {
   }
 
   output.show(true);
-  output.appendLine(`\n$ ${cli} ${args.join(' ')}`);
+  output.appendLine(`\n$ ${cliPath} ${args.join(' ')}`);
 
   await vscode.window.withProgress(
     { location: vscode.ProgressLocation.Notification, title: label, cancellable: true },
     (_progress, token) =>
       new Promise<void>((resolve) => {
-        const child = spawn(cli, args, { cwd, shell: process.platform === 'win32' });
+        const child = spawn(cliPath, args, { cwd, shell: process.platform === 'win32' });
 
         token.onCancellationRequested(() => child.kill());
 
         child.stdout.on('data', (d) => output.append(d.toString()));
         child.stderr.on('data', (d) => output.append(d.toString()));
 
-        child.on('error', (err) => {
-          vscode.window.showErrorMessage(`Failed to launch ${cli}: ${err.message}`);
+        child.on('error', (err: NodeJS.ErrnoException) => {
+          if (err.code === 'ENOENT') {
+            vscode.window
+              .showErrorMessage(
+                `Could not find "${cliPath}" on PATH. VS Code launched from the Dock often doesn't inherit your shell PATH. Set "sfdxDeployRetrieve.cliPath" to the absolute path returned by \`which ${cli}\`.`,
+                'Open Settings',
+              )
+              .then((choice) => {
+                if (choice === 'Open Settings') {
+                  vscode.commands.executeCommand(
+                    'workbench.action.openSettings',
+                    'sfdxDeployRetrieve.cliPath',
+                  );
+                }
+              });
+          } else {
+            vscode.window.showErrorMessage(`Failed to launch ${cliPath}: ${err.message}`);
+          }
           resolve();
         });
 

@@ -96,7 +96,12 @@
           "type": "string",
           "enum": ["sf", "sfdx"],
           "default": "sf",
-          "description": "Which Salesforce CLI binary to invoke."
+          "description": "Which Salesforce CLI binary to invoke (used when `cliPath` is empty)."
+        },
+        "sfdxDeployRetrieve.cliPath": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to the Salesforce CLI binary (e.g. /opt/homebrew/bin/sf or ~/.nvm/versions/node/v20.7.0/bin/sf). Use this if VS Code reports `spawn sf ENOENT`, which means it can't find `sf` on PATH. Run `which sf` in your terminal to get the path."
         },
         "sfdxDeployRetrieve.targetOrg": {
           "type": "string",
