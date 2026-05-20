@@ -4,6 +4,15 @@
   "description": "Right-click a file to deploy or retrieve it from your default Salesforce sandbox via the sf/sfdx CLI.",
   "version": "0.1.0",
   "publisher": "cloudyjohnny",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cloudyjohnny/sfdx-deploy-retrieve.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cloudyjohnny/sfdx-deploy-retrieve/issues"
+  },
+  "homepage": "https://github.com/cloudyjohnny/sfdx-deploy-retrieve#readme",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -21,6 +30,10 @@
       {
         "command": "sfdxDeployRetrieve.retrieve",
         "title": "SFDX: Retrieve This Source from Default Org"
+      },
+      {
+        "command": "sfdxDeployRetrieve.runTests",
+        "title": "SFDX: Run Apex Tests in This File"
       }
     ],
     "menus": {
@@ -34,6 +47,11 @@
           "command": "sfdxDeployRetrieve.retrieve",
           "group": "sfdx@2",
           "when": "resourceScheme == file && sfdxDeployRetrieve.isSfdxProject"
+        },
+        {
+          "command": "sfdxDeployRetrieve.runTests",
+          "group": "sfdx@3",
+          "when": "resourceScheme == file && sfdxDeployRetrieve.isSfdxProject && resourceExtname == .cls"
         }
       ],
       "editor/context": [
@@ -46,6 +64,11 @@
           "command": "sfdxDeployRetrieve.retrieve",
           "group": "sfdx@2",
           "when": "resourceScheme == file && sfdxDeployRetrieve.isSfdxProject"
+        },
+        {
+          "command": "sfdxDeployRetrieve.runTests",
+          "group": "sfdx@3",
+          "when": "resourceScheme == file && sfdxDeployRetrieve.isSfdxProject && resourceExtname == .cls"
         }
       ],
       "editor/title/context": [
@@ -58,6 +81,11 @@
           "command": "sfdxDeployRetrieve.retrieve",
           "group": "sfdx@2",
           "when": "sfdxDeployRetrieve.isSfdxProject"
+        },
+        {
+          "command": "sfdxDeployRetrieve.runTests",
+          "group": "sfdx@3",
+          "when": "sfdxDeployRetrieve.isSfdxProject && resourceExtname == .cls"
         }
       ]
     },

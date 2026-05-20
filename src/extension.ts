@@ -14,6 +14,9 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('sfdxDeployRetrieve.retrieve', (uri?: vscode.Uri) =>
       run('retrieve', uri),
     ),
+    vscode.commands.registerCommand('sfdxDeployRetrieve.runTests', (uri?: vscode.Uri) =>
+      run('runTests', uri),
+    ),
     output,
   );
 
@@ -39,7 +42,9 @@ async function updateSfdxContext() {
 
 export function deactivate() {}
 
-async function run(action: 'deploy' | 'retrieve', uri?: vscode.Uri) {
+type Action = 'deploy' | 'retrieve' | 'runTests';
+
+async function run(action: Action, uri?: vscode.Uri) {
   const target = uri ?? vscode.window.activeTextEditor?.document.uri;
   if (!target || target.scheme !== 'file') {
     vscode.window.showErrorMessage('No file selected for SFDX ' + action + '.');
@@ -53,28 +58,67 @@ async function run(action: 'deploy' | 'retrieve', uri?: vscode.Uri) {
   const workspaceFolder = vscode.workspace.getWorkspaceFolder(target);
   const cwd = workspaceFolder?.uri.fsPath ?? path.dirname(target.fsPath);
 
-  const args =
-    cli === 'sfdx'
-      ? [
-          action === 'deploy' ? 'force:source:deploy' : 'force:source:retrieve',
-          '-p',
-          target.fsPath,
-          '--forceoverwrite',
-        ]
-      : [
-          'project',
-          action,
-          'start',
-          '--source-dir',
-          target.fsPath,
-          '--ignore-conflicts',
-        ];
+  let args: string[];
+  let label: string;
+
+  if (action === 'runTests') {
+    const fileName = path.basename(target.fsPath);
+    if (!/\.cls$/i.test(fileName)) {
+      vscode.window.showErrorMessage(
+        `Cannot run Apex tests: ${fileName} is not an Apex class (.cls) file.`,
+      );
+      return;
+    }
+    const className = fileName.replace(/\.cls$/i, '');
+    args =
+      cli === 'sfdx'
+        ? [
+            'force:apex:test:run',
+            '--classnames',
+            className,
+            '--resultformat',
+            'human',
+            '--wait',
+            '10',
+            '--synchronous',
+          ]
+        : [
+            'apex',
+            'run',
+            'test',
+            '--class-names',
+            className,
+            '--result-format',
+            'human',
+            '--wait',
+            '10',
+            '--synchronous',
+          ];
+    label = `Running Apex tests in ${className}`;
+  } else {
+    args =
+      cli === 'sfdx'
+        ? [
+            action === 'deploy' ? 'force:source:deploy' : 'force:source:retrieve',
+            '-p',
+            target.fsPath,
+            '--forceoverwrite',
+          ]
+        : [
+            'project',
+            action,
+            'start',
+            '--source-dir',
+            target.fsPath,
+            '--ignore-conflicts',
+          ];
+    label = `${action === 'deploy' ? 'Deploying' : 'Retrieving'} ${path.basename(target.fsPath)}`;
+  }
 
   if (targetOrg) {
     args.push(cli === 'sfdx' ? '-u' : '--target-org', targetOrg);
   }
 
-  const label = `${action === 'deploy' ? 'Deploying' : 'Retrieving'} ${path.basename(target.fsPath)}`;
   output.show(true);
   output.appendLine(`\n$ ${cli} ${args.join(' ')}`);
 
