@@ -59,8 +59,16 @@ async function run(action: 'deploy' | 'retrieve', uri?: vscode.Uri) {
           action === 'deploy' ? 'force:source:deploy' : 'force:source:retrieve',
           '-p',
           target.fsPath,
+          '--forceoverwrite',
         ]
-      : ['project', action, 'start', '--source-dir', target.fsPath];
+      : [
+          'project',
+          action,
+          'start',
+          '--source-dir',
+          target.fsPath,
+          '--ignore-conflicts',
+        ];
 
   if (targetOrg) {
     args.push(cli === 'sfdx' ? '-u' : '--target-org', targetOrg);
